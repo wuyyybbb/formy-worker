@@ -1,0 +1,42 @@
+# FastAPI 框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# 生产服务器
+gunicorn==21.2.0
+
+# 数据验证（升级到支持 Python 3.13 的版本）
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+
+# Redis 客户端
+redis==5.0.1
+
+# 异步支持
+aiofiles==23.2.1
+
+# 环境变量
+python-dotenv==1.0.0
+
+# CORS 支持
+python-multipart==0.0.6
+
+# 工具库
+python-dateutil==2.8.2
+
+# YAML 解析
+PyYAML==6.0.1
+
+# HTTP 请求
+requests==2.31.0
+httpx==0.25.2
+
+# 图像处理
+Pillow>=10.0.0
+
+# JWT 认证（使用 PyJWT 替代 python-jose，无需编译）
+PyJWT==2.8.0
+
+# 邮箱验证（EmailStr 类型需要）
+email-validator==2.3.0
+
