@@ -13,6 +13,7 @@ from app.services.tasks.manager import get_task_service
 from app.schemas.task import EditMode
 from app.services.image.pipelines.pose_change_pipeline import PoseChangePipeline
 from app.services.image.dto import EditTaskInput
+from app.core.error_codes import TaskErrorCode, create_error
 
 
 class PipelineWorker:
