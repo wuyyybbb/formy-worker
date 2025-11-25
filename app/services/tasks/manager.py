@@ -26,12 +26,19 @@ class TaskService:
         """初始化任务服务"""
         self.queue = get_task_queue()
     
-    def create_task(self, request: TaskCreateRequest) -> TaskInfo:
+    def create_task(
+        self, 
+        request: TaskCreateRequest,
+        user_id: Optional[str] = None,
+        credits_consumed: Optional[int] = None
+    ) -> TaskInfo:
         """
         创建新任务
         
         Args:
             request: 任务创建请求
+            user_id: 用户ID（用于失败退款）
+            credits_consumed: 消耗的积分（用于失败退款）
             
         Returns:
             TaskInfo: 任务信息
@@ -43,14 +50,17 @@ class TaskService:
         task_data = {
             "mode": request.mode.value,
             "source_image": request.source_image,
-            "config": request.config
+            "config": request.config,
+            # Store user_id and credits for refund on failure
+            "user_id": user_id,
+            "credits_consumed": credits_consumed
         }
         
         # 3. 推入队列
         success = self.queue.push_task(task_id, task_data)
         
         if not success:
-            raise Exception("任务创建失败，无法推入队列")
+            raise Exception("Failed to create task: cannot push to queue")
         
         # 4. 返回任务信息
         return TaskInfo(
@@ -223,11 +233,63 @@ class TaskService:
             "details": error_details
         }
         
+        # Refund credits if task fails
+        self.refund_credits_for_failed_task(task_id)
+        
         return self.queue.update_task_status(
             task_id=task_id,
             status="failed",
             error=error
         )
+    
+    def refund_credits_for_failed_task(self, task_id: str) -> bool:
+        """
+        Refund credits for a failed task
+        
+        Policy: Full refund for all failed tasks
+        
+        Args:
+            task_id: 任务ID
+            
+        Returns:
+            bool: 是否成功退款
+        """
+        try:
+            # Get task data to retrieve user_id and credits_consumed
+            task_data = self.queue.get_task_data(task_id)
+            if not task_data:
+                print(f"[Refund] Task {task_id} not found, cannot refund")
+                return False
+            
+            # Parse task input data
+            input_data = task_data.get("data", {})
+            if isinstance(input_data, str):
+                import json
+                input_data = json.loads(input_data)
+            
+            user_id = input_data.get("user_id")
+            credits_consumed = input_data.get("credits_consumed")
+            
+            if not user_id or not credits_consumed:
+                print(f"[Refund] Task {task_id} missing user_id or credits_consumed")
+                return False
+            
+            # Refund credits
+            from app.services.billing import billing_service
+            success = billing_service.add_credits(user_id, credits_consumed)
+            
+            if success:
+                print(f"[Refund] ✓ Refunded {credits_consumed} credits to user {user_id} for failed task {task_id}")
+            else:
+                print(f"[Refund] ✗ Failed to refund credits for task {task_id}")
+            
+            return success
+            
+        except Exception as e:
+            print(f"[Refund] Error refunding credits for task {task_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
     
     def get_queue_stats(self) -> dict:
         """
