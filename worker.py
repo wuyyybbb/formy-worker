@@ -63,10 +63,19 @@ class PipelineWorker:
                     continue
                     
             except Exception as e:
-                print(f"[Worker] Worker 循环出错: {e}")
+                # 检查是否是 Redis 超时错误（队列空闲）
+                error_msg = str(e).lower()
+                if 'timeout' in error_msg or 'reading from socket' in error_msg:
+                    # 这只是队列暂时没有任务，不是真正的错误
+                    # 静默处理，继续等待
+                    time.sleep(1)
+                    continue
+                
+                # 其他异常才是真正的错误
+                print(f"[Worker] ❌ Worker 循环出错: {e}")
                 import traceback
                 traceback.print_exc()
-                time.sleep(1)  # 出错后等待 1 秒再继续
+                time.sleep(1)
         
         print("[Worker] Pipeline Worker 已停止")
     
