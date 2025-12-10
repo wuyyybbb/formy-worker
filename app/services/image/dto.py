@@ -54,6 +54,7 @@ class EditTaskResult(BaseModel):
     thumbnail: Optional[str] = Field(None, description="缩略图路径")
     comparison_image: Optional[str] = Field(None, description="对比图路径")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="元数据")
+    error_code: Optional[str] = Field(None, description="错误码")
     error_message: Optional[str] = Field(None, description="错误信息")
     processing_time: Optional[float] = Field(None, description="处理耗时（秒）")
 

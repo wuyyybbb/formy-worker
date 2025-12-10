@@ -97,18 +97,20 @@ class PipelineBase(ABC):
             processing_time=self._get_elapsed_time()
         )
     
-    def _create_error_result(self, error_message: str) -> EditTaskResult:
+    def _create_error_result(self, error_message: str, error_code: str = "PIPELINE_ERROR") -> EditTaskResult:
         """
         创建错误结果
         
         Args:
             error_message: 错误信息
+            error_code: 错误码
             
         Returns:
             EditTaskResult: 结果对象
         """
         return EditTaskResult(
             success=False,
+            error_code=error_code,
             error_message=error_message,
             processing_time=self._get_elapsed_time()
         )
